@@ -1,5 +1,7 @@
 import streamlit as st
 from datetime import datetime
+import json
+import os
 
 # ============================================================
 # CONFIGURACIÓN DE LA PÁGINA
@@ -11,50 +13,76 @@ st.set_page_config(
 )
 
 # ============================================================
+# PERSISTENCIA - Archivo JSON
+# ============================================================
+ARCHIVO_DATOS = "datos_minimarket.json"
+
+
+def guardar_datos():
+    """Guarda el estado actual en un archivo JSON."""
+    datos = {
+        "productos": st.session_state.productos,
+        "ventas": st.session_state.ventas,
+        "detalle_ventas": st.session_state.detalle_ventas,
+        "contador_producto": st.session_state.contador_producto,
+        "contador_venta": st.session_state.contador_venta
+    }
+    with open(ARCHIVO_DATOS, "w", encoding="utf-8") as f:
+        json.dump(datos, f, ensure_ascii=False, indent=2)
+
+
+def cargar_datos():
+    """Carga el estado desde el archivo JSON si existe."""
+    if os.path.exists(ARCHIVO_DATOS):
+        with open(ARCHIVO_DATOS, "r", encoding="utf-8") as f:
+            datos = json.load(f)
+        st.session_state.productos = datos.get("productos", [])
+        st.session_state.ventas = datos.get("ventas", [])
+        st.session_state.detalle_ventas = datos.get("detalle_ventas", [])
+        st.session_state.contador_producto = datos.get("contador_producto", 11)
+        st.session_state.contador_venta = datos.get("contador_venta", 1)
+        return True
+    return False
+
+
+# ============================================================
 # CAPA DE DATOS - Simula BD relacional
 # ============================================================
 if "productos" not in st.session_state:
-    st.session_state.productos = [
-        {"id": 1, "codigo": "P001", "nombre": "Café expreso", "stock": 50,
-         "precio_compra": 0.80, "precio_venta": 1.50, "stock_minimo": 10},
-        {"id": 2, "codigo": "P002", "nombre": "Pan de jamón", "stock": 30,
-         "precio_compra": 1.80, "precio_venta": 2.80, "stock_minimo": 8},
-        {"id": 3, "codigo": "P003", "nombre": "Refresco 350ml", "stock": 60,
-         "precio_compra": 0.60, "precio_venta": 1.20, "stock_minimo": 15},
-        {"id": 4, "codigo": "P004", "nombre": "Chocolates", "stock": 40,
-         "precio_compra": 0.45, "precio_venta": 0.90, "stock_minimo": 12},
-        {"id": 5, "codigo": "P005", "nombre": "Agua mineral 500ml", "stock": 80,
-         "precio_compra": 0.35, "precio_venta": 0.75, "stock_minimo": 20},
-        {"id": 6, "codigo": "P006", "nombre": "Papas fritas", "stock": 25,
-         "precio_compra": 0.55, "precio_venta": 1.10, "stock_minimo": 10},
-        {"id": 7, "codigo": "P007", "nombre": "Galletas", "stock": 45,
-         "precio_compra": 0.30, "precio_venta": 0.60, "stock_minimo": 15},
-        {"id": 8, "codigo": "P008", "nombre": "Jugo natural", "stock": 20,
-         "precio_compra": 1.20, "precio_venta": 2.00, "stock_minimo": 8},
-        {"id": 9, "codigo": "P009", "nombre": "Sándwich", "stock": 15,
-         "precio_compra": 2.00, "precio_venta": 3.50, "stock_minimo": 5},
-        {"id": 10, "codigo": "P010", "nombre": "Helado", "stock": 18,
-         "precio_compra": 1.00, "precio_venta": 1.80, "stock_minimo": 6},
-    ]
-
-if "ventas" not in st.session_state:
-    st.session_state.ventas = []
-
-if "detalle_ventas" not in st.session_state:
-    st.session_state.detalle_ventas = []
-
-if "contador_producto" not in st.session_state:
-    st.session_state.contador_producto = 11
-
-if "contador_venta" not in st.session_state:
-    st.session_state.contador_venta = 1
+    if not cargar_datos():
+        # Datos por defecto si no existe el archivo
+        st.session_state.productos = [
+            {"id": 1, "codigo": "P001", "nombre": "Café expreso", "stock": 50,
+             "precio_compra": 0.80, "precio_venta": 1.50, "stock_minimo": 10},
+            {"id": 2, "codigo": "P002", "nombre": "Pan de jamón", "stock": 30,
+             "precio_compra": 1.80, "precio_venta": 2.80, "stock_minimo": 8},
+            {"id": 3, "codigo": "P003", "nombre": "Refresco 350ml", "stock": 60,
+             "precio_compra": 0.60, "precio_venta": 1.20, "stock_minimo": 15},
+            {"id": 4, "codigo": "P004", "nombre": "Chocolates", "stock": 40,
+             "precio_compra": 0.45, "precio_venta": 0.90, "stock_minimo": 12},
+            {"id": 5, "codigo": "P005", "nombre": "Agua mineral 500ml", "stock": 80,
+             "precio_compra": 0.35, "precio_venta": 0.75, "stock_minimo": 20},
+            {"id": 6, "codigo": "P006", "nombre": "Papas fritas", "stock": 25,
+             "precio_compra": 0.55, "precio_venta": 1.10, "stock_minimo": 10},
+            {"id": 7, "codigo": "P007", "nombre": "Galletas", "stock": 45,
+             "precio_compra": 0.30, "precio_venta": 0.60, "stock_minimo": 15},
+            {"id": 8, "codigo": "P008", "nombre": "Jugo natural", "stock": 20,
+             "precio_compra": 1.20, "precio_venta": 2.00, "stock_minimo": 8},
+            {"id": 9, "codigo": "P009", "nombre": "Sándwich", "stock": 15,
+             "precio_compra": 2.00, "precio_venta": 3.50, "stock_minimo": 5},
+            {"id": 10, "codigo": "P010", "nombre": "Helado", "stock": 18,
+             "precio_compra": 1.00, "precio_venta": 1.80, "stock_minimo": 6},
+        ]
+        st.session_state.ventas = []
+        st.session_state.detalle_ventas = []
+        st.session_state.contador_producto = 11
+        st.session_state.contador_venta = 1
+        guardar_datos()
 
 if "carrito" not in st.session_state:
     st.session_state.carrito = []
-
 if "ultima_venta" not in st.session_state:
     st.session_state.ultima_venta = None
-
 if "mensaje_producto" not in st.session_state:
     st.session_state.mensaje_producto = None
 
@@ -94,6 +122,7 @@ def agregar_producto(codigo, nombre, stock, precio_compra, precio_venta, stock_m
     }
     st.session_state.productos.append(nuevo)
     st.session_state.contador_producto += 1
+    guardar_datos()  # 💾 Guardar
     return True, f"✅ Producto '{nombre}' agregado correctamente"
 
 
@@ -110,6 +139,7 @@ def modificar_producto(id_producto, codigo, nombre, stock, precio_compra, precio
     p["precio_compra"] = precio_compra
     p["precio_venta"] = precio_venta
     p["stock_minimo"] = stock_minimo
+    guardar_datos()  # 💾 Guardar
     return True, f"✅ Producto '{nombre}' modificado correctamente"
 
 
@@ -118,6 +148,7 @@ def eliminar_producto(id_producto):
     if not p:
         return False, "❌ Producto no encontrado"
     st.session_state.productos = [prod for prod in st.session_state.productos if prod["id"] != id_producto]
+    guardar_datos()  # 💾 Guardar
     return True, f"✅ Producto '{p['nombre']}' eliminado correctamente"
 
 
@@ -166,6 +197,7 @@ def registrar_venta(items):
         })
 
     st.session_state.contador_venta += 1
+    guardar_datos()  # 💾 Guardar
     return True, f"✅ Venta #{venta['id']} registrada por ${total:,.2f}", venta
 
 
@@ -318,6 +350,16 @@ seccion = st.sidebar.radio(
     "Selecciona un módulo:",
     ["🏠 Inicio", "📦 Productos", "💰 Punto de Venta", "📊 Reportes", "🤖 Asistente IA"]
 )
+
+# Botón para reiniciar datos
+st.sidebar.markdown("---")
+if st.sidebar.button("🔄 Reiniciar todos los datos"):
+    if os.path.exists(ARCHIVO_DATOS):
+        os.remove(ARCHIVO_DATOS)
+    st.session_state.clear()
+    st.rerun()
+
+
 
 bajos = productos_con_stock_bajo()
 if bajos:
