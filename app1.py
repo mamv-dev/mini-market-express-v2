@@ -13,6 +13,22 @@ st.set_page_config(
 )
 
 # ============================================================
+# CONFIGURACIÓN DE MONEDA
+# ============================================================
+TASA_BCV = 855.66  # 1 USD = 855,66 Bs
+
+
+def a_bolivares(monto_usd):
+    """Convierte un monto en dólares a bolívares."""
+    return monto_usd * TASA_BCV
+
+
+def formato_bs(monto_usd):
+    """Devuelve un string formateado en Bs."""
+    return f"Bs. {a_bolivares(monto_usd):,.2f}"
+
+
+# ============================================================
 # PERSISTENCIA - Archivo JSON
 # ============================================================
 ARCHIVO_DATOS = "datos_minimarket.json"
@@ -50,7 +66,6 @@ def cargar_datos():
 # ============================================================
 if "productos" not in st.session_state:
     if not cargar_datos():
-        # Datos por defecto si no existe el archivo
         st.session_state.productos = [
             {"id": 1, "codigo": "P001", "nombre": "Café expreso", "stock": 50,
              "precio_compra": 0.80, "precio_venta": 1.50, "stock_minimo": 10},
@@ -122,7 +137,7 @@ def agregar_producto(codigo, nombre, stock, precio_compra, precio_venta, stock_m
     }
     st.session_state.productos.append(nuevo)
     st.session_state.contador_producto += 1
-    guardar_datos()  # 💾 Guardar
+    guardar_datos()
     return True, f"✅ Producto '{nombre}' agregado correctamente"
 
 
@@ -139,7 +154,7 @@ def modificar_producto(id_producto, codigo, nombre, stock, precio_compra, precio
     p["precio_compra"] = precio_compra
     p["precio_venta"] = precio_venta
     p["stock_minimo"] = stock_minimo
-    guardar_datos()  # 💾 Guardar
+    guardar_datos()
     return True, f"✅ Producto '{nombre}' modificado correctamente"
 
 
@@ -148,7 +163,7 @@ def eliminar_producto(id_producto):
     if not p:
         return False, "❌ Producto no encontrado"
     st.session_state.productos = [prod for prod in st.session_state.productos if prod["id"] != id_producto]
-    guardar_datos()  # 💾 Guardar
+    guardar_datos()
     return True, f"✅ Producto '{p['nombre']}' eliminado correctamente"
 
 
@@ -197,7 +212,7 @@ def registrar_venta(items):
         })
 
     st.session_state.contador_venta += 1
-    guardar_datos()  # 💾 Guardar
+    guardar_datos()
     return True, f"✅ Venta #{venta['id']} registrada por ${total:,.2f}", venta
 
 
@@ -253,10 +268,10 @@ def responder_consulta(pregunta):
         return respuesta
 
     if "venta" in pregunta and ("total" in pregunta or "cuánto" in pregunta or "cuanto" in pregunta):
-        return f"💰 El total de ventas es **${total_ventas():,.2f}**"
+        return f"💰 El total de ventas es **${total_ventas():,.2f}** (Bs. {a_bolivares(total_ventas()):,.2f})"
 
     if "ganancia" in pregunta or "utilidad" in pregunta:
-        return f"📈 La ganancia total es **${ganancia_total():,.2f}**"
+        return f"📈 La ganancia total es **${ganancia_total():,.2f}** (Bs. {a_bolivares(ganancia_total()):,.2f})"
 
     if "más vendido" in pregunta or "mas vendido" in pregunta or "top" in pregunta:
         ganadores = producto_mas_vendido()
@@ -276,9 +291,9 @@ def responder_consulta(pregunta):
     if "inventario" in pregunta or "valor" in pregunta:
         vc, vv = valor_inventario()
         return (f"💼 **Valor del inventario:**\n"
-                f"- Compra: **${vc:,.2f}**\n"
-                f"- Venta: **${vv:,.2f}**\n"
-                f"- Ganancia potencial: **${vv-vc:,.2f}**")
+                f"- Compra: **${vc:,.2f}** (Bs. {a_bolivares(vc):,.2f})\n"
+                f"- Venta: **${vv:,.2f}** (Bs. {a_bolivares(vv):,.2f})\n"
+                f"- Ganancia potencial: **${vv-vc:,.2f}** (Bs. {a_bolivares(vv-vc):,.2f})")
 
     if "cuántos productos" in pregunta or "cuantos productos" in pregunta:
         return f"📦 Hay **{len(obtener_productos())} productos** registrados."
@@ -297,7 +312,7 @@ def responder_consulta(pregunta):
             sugerencias.append(f"💎 Mejor margen: {margenes[0][0]} ({margenes[0][1]:.1f}%)")
             sugerencias.append(f"📉 Menor margen: {margenes[-1][0]} ({margenes[-1][1]:.1f}%)")
         if st.session_state.ventas:
-            sugerencias.append(f"📈 Ganancia acumulada: ${ganancia_total():,.2f}")
+            sugerencias.append(f"📈 Ganancia acumulada: ${ganancia_total():,.2f} (Bs. {a_bolivares(ganancia_total()):,.2f})")
         return "\n".join(sugerencias)
 
     return ("🤖 No entendí. Prueba:\n"
@@ -359,7 +374,9 @@ if st.sidebar.button("🔄 Reiniciar todos los datos"):
     st.session_state.clear()
     st.rerun()
 
-
+# Mostrar tasa del día
+st.sidebar.markdown("---")
+st.sidebar.caption(f"💱 Tasa: $1 = Bs. {TASA_BCV:,.2f}")
 
 bajos = productos_con_stock_bajo()
 if bajos:
@@ -400,9 +417,9 @@ if seccion == "🏠 Inicio":
 
     col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("📦 Productos", len(prods))
-    col2.metric("💰 Ventas Totales", f"${total_v:,.2f}")
-    col3.metric("📈 Ganancia", f"${gan:,.2f}")
-    col4.metric("💼 Valor Inventario", f"${vc:,.2f}")
+    col2.metric("💰 Ventas Totales", f"${total_v:,.2f}", f"Bs. {a_bolivares(total_v):,.2f}")
+    col3.metric("📈 Ganancia", f"${gan:,.2f}", f"Bs. {a_bolivares(gan):,.2f}")
+    col4.metric("💼 Valor Inventario", f"${vc:,.2f}", f"Bs. {a_bolivares(vc):,.2f}")
     col5.metric("⚠️ Stock Bajo", len(bajos))
 
     st.markdown("---")
@@ -415,11 +432,12 @@ if seccion == "🏠 Inicio":
 
     st.markdown("---")
     st.subheader("📋 Estado del Inventario")
-    tabla = "| Código | Producto | Stock | Estado | Precio Venta |\n"
-    tabla += "|--------|----------|-------|--------|--------------|\n"
+    tabla = "| Código | Producto | Stock | Estado | Precio Venta ($) | Precio Venta (Bs.) |\n"
+    tabla += "|--------|----------|-------|--------|------------------|--------------------|\n"
     for p in prods:
         badge = badge_stock(p["stock"], p["stock_minimo"])
-        tabla += f"| {p['codigo']} | {p['nombre']} | {p['stock']} | {badge} | ${p['precio_venta']:.2f} |\n"
+        tabla += (f"| {p['codigo']} | {p['nombre']} | {p['stock']} | {badge} | "
+                  f"${p['precio_venta']:.2f} | Bs. {a_bolivares(p['precio_venta']):,.2f} |\n")
     st.markdown(tabla)
 
 
@@ -453,7 +471,8 @@ elif seccion == "📦 Productos":
                     badge = badge_stock(p["stock"], p["stock_minimo"])
                     st.markdown(f"**{p['codigo']}** — {p['nombre']} — {badge}")
                     st.caption(f"Stock: {p['stock']} | Mín: {p['stock_minimo']} | "
-                               f"Compra: ${p['precio_compra']:.2f} | Venta: ${p['precio_venta']:.2f}")
+                               f"Compra: ${p['precio_compra']:.2f} (Bs. {a_bolivares(p['precio_compra']):,.2f}) | "
+                               f"Venta: ${p['precio_venta']:.2f} (Bs. {a_bolivares(p['precio_venta']):,.2f})")
                 with col2:
                     st.html(barra_stock(p["stock"], p["stock_minimo"]))
                 st.markdown("---")
@@ -565,7 +584,7 @@ elif seccion == "💰 Punto de Venta":
 
     col1, col2, col3 = st.columns([2, 1, 1])
     prods = obtener_productos()
-    opciones = {f"{p['codigo']} - {p['nombre']} (stock: {p['stock']}) - ${p['precio_venta']:.2f}": p for p in prods}
+    opciones = {f"{p['codigo']} - {p['nombre']} (stock: {p['stock']}) - ${p['precio_venta']:.2f} (Bs. {a_bolivares(p['precio_venta']):,.2f})": p for p in prods}
 
     with col1:
         seleccionado = st.selectbox("Producto:", list(opciones.keys()))
@@ -591,14 +610,16 @@ elif seccion == "💰 Punto de Venta":
     if not st.session_state.carrito:
         st.info("ℹ️ El carrito está vacío.")
     else:
-        tabla = "| Código | Producto | Cantidad | Precio | Subtotal |\n"
-        tabla += "|--------|----------|----------|--------|----------|\n"
+        tabla = "| Código | Producto | Cantidad | Precio ($) | Precio (Bs.) | Subtotal ($) | Subtotal (Bs.) |\n"
+        tabla += "|--------|----------|----------|------------|--------------|--------------|----------------|\n"
         total = 0
         for item in st.session_state.carrito:
-            tabla += f"| {item['codigo']} | {item['nombre']} | {item['cantidad']} | ${item['precio']:.2f} | ${item['subtotal']:.2f} |\n"
+            tabla += (f"| {item['codigo']} | {item['nombre']} | {item['cantidad']} | "
+                      f"${item['precio']:.2f} | Bs. {a_bolivares(item['precio']):,.2f} | "
+                      f"${item['subtotal']:.2f} | Bs. {a_bolivares(item['subtotal']):,.2f} |\n")
             total += item["subtotal"]
         st.markdown(tabla)
-        st.markdown(f"### 💵 **TOTAL: ${total:,.2f}**")
+        st.markdown(f"### 💵 **TOTAL: ${total:,.2f}** — **Bs. {a_bolivares(total):,.2f}**")
 
         with st.form("acciones_carrito"):
             col1, col2 = st.columns(2)
@@ -620,6 +641,9 @@ elif seccion == "💰 Punto de Venta":
                 else:
                     st.error(msg)
 
+    # ========================================================
+    # 🧾 TICKET REALISTA EN BOLÍVARES
+    # ========================================================
     if st.session_state.ultima_venta:
         venta = st.session_state.ultima_venta
 
@@ -629,49 +653,61 @@ elif seccion == "💰 Punto de Venta":
         subtotal_sin_iva = venta['total'] / 1.16
         iva = venta['total'] - subtotal_sin_iva
 
+        # Conversión a Bs.
+        subtotal_bs = a_bolivares(subtotal_sin_iva)
+        iva_bs = a_bolivares(iva)
+        total_bs = a_bolivares(venta['total'])
+
+        # Número de factura formateado
+        numero_ticket = f"{venta['id']:08d}"
+
+        # Construcción del HTML del ticket
         html_ticket = f"""
-        <div style="font-family:'Courier New',monospace;background-color:#ffffff;color:#000000;padding:30px;border-radius:8px;max-width:450px;margin:0 auto;box-shadow:0 4px 15px rgba(0,0,0,0.15);border:1px solid #ddd;">
+        <div style="font-family:'Courier New',monospace;background-color:#ffffff;color:#000000;padding:25px;border-radius:8px;max-width:420px;margin:0 auto;box-shadow:0 4px 15px rgba(0,0,0,0.15);border:2px solid #333;">
 
-        <div style="text-align:center;margin-bottom:15px;">
-        <div style="font-size:22px;font-weight:bold;">MINI MARKET EXPRESS</div>
-        <div style="font-size:12px;">Sistema de Gestión de Stock</div>
+        <div style="text-align:center;border-bottom:2px dashed #000;padding-bottom:12px;margin-bottom:12px;">
+        <div style="font-size:20px;font-weight:bold;letter-spacing:2px;">MINI MARKET EXPRESS</div>
         <div style="font-size:11px;margin-top:5px;">RIF: J-12345678-9</div>
-        <div style="font-size:11px;">Av. Principal, Ciudad Bolívar</div>
-        <div style="font-size:11px;">Telf: 0285-6312346</div>
+        <div style="font-size:10px;margin-top:3px;">Av. Principal, Ciudad Bolívar</div>
+        <div style="font-size:10px;">Telf: 0285-6312346</div>
+        <div style="font-size:10px;">www.minimarketexpress.com</div>
         </div>
 
-        <div style="border-top:2px dashed #000;border-bottom:2px dashed #000;padding:8px 0;margin:10px 0;text-align:center;font-size:12px;">
-        <strong>COMPROBANTE DE VENTA</strong>
+        <div style="text-align:center;font-size:12px;font-weight:bold;border:2px solid #000;padding:6px;margin:10px 0;letter-spacing:1px;">
+        FACTURA / COMPROBANTE DE VENTA
         </div>
 
-        <div style="font-size:12px;line-height:1.6;">
-        <div><strong>Ticket N°:</strong> {venta['id']:05d}</div>
-        <div><strong>Fecha:</strong> {venta['fecha']}</div>
-        <div><strong>Cajero:</strong> Operador 01</div>
-        <div><strong>Cliente:</strong> Consumidor Final</div>
+        <div style="font-size:11px;line-height:1.7;">
+        <div><strong>N° FACTURA:</strong> {numero_ticket}</div>
+        <div><strong>FECHA:</strong> {venta['fecha']}</div>
+        <div><strong>CAJERO:</strong> Operador 01</div>
+        <div><strong>CLIENTE:</strong> Consumidor Final</div>
+        <div><strong>CAJA:</strong> 01</div>
         </div>
 
-        <div style="border-top:1px dashed #000;margin:12px 0;"></div>
+        <div style="border-top:2px dashed #000;margin:12px 0;"></div>
 
-        <table style="width:100%;font-size:12px;font-family:'Courier New',monospace;border-collapse:collapse;">
+        <table style="width:100%;font-size:11px;font-family:'Courier New',monospace;border-collapse:collapse;">
         <thead>
         <tr style="border-bottom:1px solid #000;">
-        <th style="text-align:left;padding:4px 0;">Cant</th>
-        <th style="text-align:left;padding:4px 0;">Descripción</th>
-        <th style="text-align:right;padding:4px 0;">P.Unit</th>
-        <th style="text-align:right;padding:4px 0;">Total</th>
+        <th style="text-align:left;padding:4px 0;">CANT</th>
+        <th style="text-align:left;padding:4px 0;">DESCRIPCIÓN</th>
+        <th style="text-align:right;padding:4px 0;">P.UNIT</th>
+        <th style="text-align:right;padding:4px 0;">TOTAL</th>
         </tr>
         </thead>
         <tbody>
         """
 
         for d in venta["items"]:
+            precio_bs = a_bolivares(d["precio_unitario"])
+            subtotal_bs_item = a_bolivares(d["subtotal"])
             html_ticket += (
                 f'<tr>'
-                f'<td style="padding:3px 0;">{d["cantidad"]}</td>'
-                f'<td style="padding:3px 0;">{d["nombre"][:18]}</td>'
-                f'<td style="text-align:right;padding:3px 0;">${d["precio_unitario"]:.2f}</td>'
-                f'<td style="text-align:right;padding:3px 0;">${d["subtotal"]:.2f}</td>'
+                f'<td style="padding:4px 0;vertical-align:top;">{d["cantidad"]}</td>'
+                f'<td style="padding:4px 0;">{d["nombre"][:16]}</td>'
+                f'<td style="text-align:right;padding:4px 0;">{precio_bs:,.2f}</td>'
+                f'<td style="text-align:right;padding:4px 0;">{subtotal_bs_item:,.2f}</td>'
                 f'</tr>'
             )
 
@@ -679,34 +715,49 @@ elif seccion == "💰 Punto de Venta":
         </tbody>
         </table>
 
-        <div style="border-top:1px dashed #000;margin:12px 0;"></div>
+        <div style="border-top:2px dashed #000;margin:12px 0;"></div>
 
-        <div style="font-size:12px;line-height:1.8;">
+        <div style="font-size:12px;line-height:1.9;">
         <div style="display:flex;justify-content:space-between;">
-        <span>SUBTOTAL:</span>
-        <span>${subtotal_sin_iva:.2f}</span>
+        <span>SUBTOTAL (Bs.):</span>
+        <span>{subtotal_bs:,.2f}</span>
         </div>
         <div style="display:flex;justify-content:space-between;">
-        <span>IVA (16%):</span>
-        <span>${iva:.2f}</span>
+        <span>IVA 16% (Bs.):</span>
+        <span>{iva_bs:,.2f}</span>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:bold;border-top:2px solid #000;padding-top:8px;margin-top:8px;">
-        <span>TOTAL:</span>
-        <span>${venta['total']:.2f}</span>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:bold;border-top:2px solid #000;padding-top:8px;margin-top:8px;">
+        <span>TOTAL (Bs.):</span>
+        <span>{total_bs:,.2f}</span>
         </div>
         </div>
 
-        <div style="border-top:1px dashed #000;margin:12px 0;"></div>
+        <div style="border-top:2px dashed #000;margin:12px 0;"></div>
 
-        <div style="text-align:center;font-size:11px;line-height:1.6;">
-        <div><strong>Forma de pago:</strong> Efectivo</div>
-        <div><strong>Artículos:</strong> {len(venta['items'])}</div>
-        <div style="margin-top:10px;">-----------------------------</div>
-        <div style="margin-top:8px;font-size:12px;"><strong>¡GRACIAS POR SU COMPRA!</strong></div>
+        <div style="font-size:11px;line-height:1.7;text-align:center;">
+        <div><strong>FORMA DE PAGO:</strong> Efectivo</div>
+        <div><strong>ARTÍCULOS:</strong> {len(venta['items'])}</div>
+        <div><strong>MONEDA:</strong> Bolívares (Bs.)</div>
+        </div>
+
+        <div style="border-top:2px dashed #000;margin:12px 0;"></div>
+
+        <div style="text-align:center;font-size:10px;line-height:1.5;">
+        <div style="font-size:11px;font-weight:bold;">¡GRACIAS POR SU COMPRA!</div>
         <div style="margin-top:5px;">Vuelva pronto</div>
-        <div style="margin-top:10px;font-size:10px;">Conserve este ticket para cambios</div>
-        <div style="margin-top:5px;font-size:10px;">www.minimarketexpress.com</div>
-        <div style="margin-top:10px;">=============================</div>
+        <div style="margin-top:8px;font-size:9px;">Conserve este ticket para cambios</div>
+        <div style="margin-top:3px;font-size:9px;">Este documento es un comprobante de venta</div>
+        </div>
+
+        <div style="text-align:center;margin-top:15px;font-size:14px;letter-spacing:2px;">
+        ||| |||| || ||||| ||| |||| ||||| ||| ||||
+        </div>
+        <div style="text-align:center;font-size:9px;margin-top:3px;">
+        {numero_ticket}
+        </div>
+
+        <div style="text-align:center;font-size:9px;margin-top:10px;">
+        Tasa BCV: Bs. {TASA_BCV:,.2f} por $1
         </div>
 
         </div>
@@ -738,10 +789,10 @@ elif seccion == "📊 Reportes":
             ticket_promedio = total_v / num_ventas if num_ventas else 0
 
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("💰 Total Vendido", f"${total_v:,.2f}")
-            col2.metric("📈 Ganancia", f"${gan:,.2f}")
+            col1.metric("💰 Total Vendido", f"${total_v:,.2f}", f"Bs. {a_bolivares(total_v):,.2f}")
+            col2.metric("📈 Ganancia", f"${gan:,.2f}", f"Bs. {a_bolivares(gan):,.2f}")
             col3.metric("🧾 N° Ventas", num_ventas)
-            col4.metric("📊 Ticket Promedio", f"${ticket_promedio:,.2f}")
+            col4.metric("📊 Ticket Promedio", f"${ticket_promedio:,.2f}", f"Bs. {a_bolivares(ticket_promedio):,.2f}")
 
             st.markdown("---")
 
@@ -797,11 +848,13 @@ elif seccion == "📊 Reportes":
             st.markdown("---")
             st.subheader("📋 Historial de Ventas")
             for v in reversed(ventas):
-                with st.expander(f"🧾 Venta #{v['id']} — {v['fecha']} — ${v['total']:,.2f}"):
-                    t = "| Producto | Cant. | Precio | Subtotal |\n"
-                    t += "|----------|-------|--------|----------|\n"
+                with st.expander(f"🧾 Venta #{v['id']} — {v['fecha']} — ${v['total']:,.2f} (Bs. {a_bolivares(v['total']):,.2f})"):
+                    t = "| Producto | Cant. | Precio ($) | Precio (Bs.) | Subtotal ($) | Subtotal (Bs.) |\n"
+                    t += "|----------|-------|------------|--------------|--------------|----------------|\n"
                     for d in v["items"]:
-                        t += f"| {d['nombre']} | {d['cantidad']} | ${d['precio_unitario']:.2f} | ${d['subtotal']:.2f} |\n"
+                        t += (f"| {d['nombre']} | {d['cantidad']} | ${d['precio_unitario']:.2f} | "
+                              f"Bs. {a_bolivares(d['precio_unitario']):,.2f} | "
+                              f"${d['subtotal']:.2f} | Bs. {a_bolivares(d['subtotal']):,.2f} |\n")
                     st.markdown(t)
 
     with tab2:
@@ -811,15 +864,17 @@ elif seccion == "📊 Reportes":
 
         col1, col2, col3 = st.columns(3)
         col1.metric("📦 Total Productos", len(prods))
-        col2.metric("💼 Valor Compra", f"${vc:,.2f}")
-        col3.metric("💵 Valor Venta", f"${vv:,.2f}")
+        col2.metric("💼 Valor Compra", f"${vc:,.2f}", f"Bs. {a_bolivares(vc):,.2f}")
+        col3.metric("💵 Valor Venta", f"${vv:,.2f}", f"Bs. {a_bolivares(vv):,.2f}")
 
         st.markdown("---")
-        tabla = "| Código | Producto | Stock | P.Compra | P.Venta | Valor |\n"
-        tabla += "|--------|----------|-------|----------|---------|-------|\n"
+        tabla = "| Código | Producto | Stock | P.Compra ($) | P.Venta ($) | Valor ($) | Valor (Bs.) |\n"
+        tabla += "|--------|----------|-------|--------------|-------------|-----------|-------------|\n"
         for p in prods:
             valor = p["stock"] * p["precio_compra"]
-            tabla += f"| {p['codigo']} | {p['nombre']} | {p['stock']} | ${p['precio_compra']:.2f} | ${p['precio_venta']:.2f} | ${valor:.2f} |\n"
+            tabla += (f"| {p['codigo']} | {p['nombre']} | {p['stock']} | "
+                      f"${p['precio_compra']:.2f} | ${p['precio_venta']:.2f} | "
+                      f"${valor:.2f} | Bs. {a_bolivares(valor):,.2f} |\n")
         st.markdown(tabla)
 
     with tab3:
@@ -976,7 +1031,8 @@ elif seccion == "🤖 Asistente IA":
             st.markdown(svg_grafica, unsafe_allow_html=True)
 
             st.caption(
-                f"📊 **Ganancia total mostrada:** ${sum(ganancias_grafica):,.2f} | "
+                f"📊 **Ganancia total mostrada:** ${sum(ganancias_grafica):,.2f} "
+                f"(Bs. {a_bolivares(sum(ganancias_grafica)):,.2f}) | "
                 f"**Productos:** {len(productos_grafica)}"
             )
 
