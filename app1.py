@@ -100,6 +100,8 @@ if "ultima_venta" not in st.session_state:
     st.session_state.ultima_venta = None
 if "mensaje_producto" not in st.session_state:
     st.session_state.mensaje_producto = None
+if "pestana_productos" not in st.session_state:
+    st.session_state.pestana_productos = 0
 
 
 # ============================================================
@@ -457,9 +459,15 @@ elif seccion == "📦 Productos":
             st.warning(texto)
         st.session_state.mensaje_producto = None
 
+    # ✅ Recordar la pestaña activa
+    if "pestana_productos" not in st.session_state:
+        st.session_state.pestana_productos = 0
+
     tab_lista, tab_alta, tab_mod, tab_baja = st.tabs(["📋 Lista", "➕ Alta", "✏️ Modificar", "🗑️ Baja"])
 
     with tab_lista:
+        if st.session_state.pestana_productos != 0:
+            st.session_state.pestana_productos = 0
         st.subheader("📋 Lista de Productos")
         prods = obtener_productos()
         if not prods:
@@ -478,6 +486,8 @@ elif seccion == "📦 Productos":
                 st.markdown("---")
 
     with tab_alta:
+        if st.session_state.pestana_productos != 1:
+            st.session_state.pestana_productos = 1
         st.subheader("➕ Dar de Alta un Producto")
         with st.form("form_alta"):
             col1, col2 = st.columns(2)
@@ -494,20 +504,26 @@ elif seccion == "📦 Productos":
             if submitted:
                 if not codigo or not nombre:
                     st.session_state.mensaje_producto = ("error", "❌ Código y nombre son obligatorios")
+                    st.session_state.pestana_productos = 1
                     st.rerun()
                 elif precio_venta < precio_compra:
                     st.session_state.mensaje_producto = ("error", "❌ El precio de venta no puede ser menor al de compra")
+                    st.session_state.pestana_productos = 1
                     st.rerun()
                 else:
                     ok, msg = agregar_producto(codigo, nombre, stock, precio_compra, precio_venta, stock_minimo)
                     if ok:
                         st.session_state.mensaje_producto = ("success", f'✅ "{nombre}" agregado exitosamente')
+                        st.session_state.pestana_productos = 1
                         st.rerun()
                     else:
                         st.session_state.mensaje_producto = ("error", msg)
+                        st.session_state.pestana_productos = 1
                         st.rerun()
 
     with tab_mod:
+        if st.session_state.pestana_productos != 2:
+            st.session_state.pestana_productos = 2
         st.subheader("✏️ Modificar Producto")
         prods = obtener_productos()
         if not prods:
@@ -540,12 +556,16 @@ elif seccion == "📦 Productos":
                             )
                         else:
                             st.session_state.mensaje_producto = ("success", f'✅ "{nombre}" modificado exitosamente')
+                        st.session_state.pestana_productos = 2
                         st.rerun()
                     else:
                         st.session_state.mensaje_producto = ("error", msg)
+                        st.session_state.pestana_productos = 2
                         st.rerun()
 
     with tab_baja:
+        if st.session_state.pestana_productos != 3:
+            st.session_state.pestana_productos = 3
         st.subheader("🗑️ Dar de Baja un Producto")
         prods = obtener_productos()
         if not prods:
@@ -563,9 +583,11 @@ elif seccion == "📦 Productos":
                         "success",
                         f'✅ "{nombre_a_borrar}" dado de baja exitosamente'
                     )
+                    st.session_state.pestana_productos = 3
                     st.rerun()
                 else:
                     st.session_state.mensaje_producto = ("error", msg)
+                    st.session_state.pestana_productos = 3
                     st.rerun()
 
 
@@ -641,9 +663,6 @@ elif seccion == "💰 Punto de Venta":
                 else:
                     st.error(msg)
 
-    # ========================================================
-    # 🧾 TICKET REALISTA EN BOLÍVARES
-    # ========================================================
     if st.session_state.ultima_venta:
         venta = st.session_state.ultima_venta
 
@@ -653,15 +672,12 @@ elif seccion == "💰 Punto de Venta":
         subtotal_sin_iva = venta['total'] / 1.16
         iva = venta['total'] - subtotal_sin_iva
 
-        # Conversión a Bs.
         subtotal_bs = a_bolivares(subtotal_sin_iva)
         iva_bs = a_bolivares(iva)
         total_bs = a_bolivares(venta['total'])
 
-        # Número de factura formateado
         numero_ticket = f"{venta['id']:08d}"
 
-        # Construcción del HTML del ticket
         html_ticket = f"""
         <div style="font-family:'Courier New',monospace;background-color:#ffffff;color:#000000;padding:25px;border-radius:8px;max-width:420px;margin:0 auto;box-shadow:0 4px 15px rgba(0,0,0,0.15);border:2px solid #333;">
 
