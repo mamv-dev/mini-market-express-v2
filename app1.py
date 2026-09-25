@@ -50,73 +50,74 @@ def guardar_datos():
 def cargar_datos():
     """Carga el estado desde el archivo JSON si existe."""
     if os.path.exists(ARCHIVO_DATOS):
-        with open(ARCHIVO_DATOS, "r", encoding="utf-8") as f:
-            datos = json.load(f)
-        st.session_state.productos = datos.get("productos", [])
-        st.session_state.ventas = datos.get("ventas", [])
-        st.session_state.detalle_ventas = datos.get("detalle_ventas", [])
-        st.session_state.contador_producto = datos.get("contador_producto", 21)
-        st.session_state.contador_venta = datos.get("contador_venta", 1)
-        return True
+        try:
+            with open(ARCHIVO_DATOS, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+            st.session_state.productos = datos.get("productos", [])
+            st.session_state.ventas = datos.get("ventas", [])
+            st.session_state.detalle_ventas = datos.get("detalle_ventas", [])
+            st.session_state.contador_producto = datos.get("contador_producto", 21)
+            st.session_state.contador_venta = datos.get("contador_venta", 1)
+            return True
+        except Exception:
+            return False
     return False
 
 
 # ============================================================
-# CAPA DE DATOS - 20 PRODUCTOS NUEVOS (SIN VENTAS ANTIGUAS)
+# CAPA DE DATOS - 20 PRODUCTOS POR DEFECTO
+# Se cargan SOLO la primera vez (si no existe el archivo JSON)
 # ============================================================
 if "productos" not in st.session_state:
-    # 🔄 Si ya existe un archivo JSON viejo con productos viejos, lo borramos
-    if os.path.exists(ARCHIVO_DATOS):
-        os.remove(ARCHIVO_DATOS)
-
-    # ✅ Cargamos los 20 productos nuevos por defecto
-    st.session_state.productos = [
-        {"id": 1, "codigo": "P001", "nombre": "Harina De Trigo Mary Leudante 900 Gr",
-         "stock": 85, "precio_compra": 0.90, "precio_venta": 1.08, "stock_minimo": 20},
-        {"id": 2, "codigo": "P002", "nombre": "Arroz Mary Premium 900 Gr. Tipo I",
-         "stock": 70, "precio_compra": 1.20, "precio_venta": 1.50, "stock_minimo": 20},
-        {"id": 3, "codigo": "P003", "nombre": "Arroz Mary Superior 900 Gr",
-         "stock": 150, "precio_compra": 1.00, "precio_venta": 1.20, "stock_minimo": 30},
-        {"id": 4, "codigo": "P004", "nombre": "Azúcar Montalban Refinada 1 Kg",
-         "stock": 100, "precio_compra": 1.80, "precio_venta": 2.20, "stock_minimo": 20},
-        {"id": 5, "codigo": "P005", "nombre": "Leche La Pastoreña Completa 1 Lt",
-         "stock": 50, "precio_compra": 2.40, "precio_venta": 2.90, "stock_minimo": 15},
-        {"id": 6, "codigo": "P006", "nombre": "Harina PAN Maíz Blanco Gluten Free",
-         "stock": 100, "precio_compra": 0.95, "precio_venta": 1.16, "stock_minimo": 25},
-        {"id": 7, "codigo": "P007", "nombre": "Pasta Primor Vermicelli 1 Kg",
-         "stock": 70, "precio_compra": 2.10, "precio_venta": 2.60, "stock_minimo": 20},
-        {"id": 8, "codigo": "P008", "nombre": "Crema Dental Alident Gel Azul Aliento Fresco 100 Gr",
-         "stock": 90, "precio_compra": 1.05, "precio_venta": 1.30, "stock_minimo": 20},
-        {"id": 9, "codigo": "P009", "nombre": "Crema Dental Colgate Triple Acción 150 ML",
-         "stock": 60, "precio_compra": 5.10, "precio_venta": 6.10, "stock_minimo": 15},
-        {"id": 10, "codigo": "P010", "nombre": "Papel Higiénico Rosal Plus 4 Rollos 600 Hojas cada uno",
-         "stock": 100, "precio_compra": 3.60, "precio_venta": 4.30, "stock_minimo": 25},
-        {"id": 11, "codigo": "P011", "nombre": "Toalla Sanitaria Always Día Seda Sec x 8 und",
-         "stock": 50, "precio_compra": 2.60, "precio_venta": 3.10, "stock_minimo": 15},
-        {"id": 12, "codigo": "P012", "nombre": "Margarina Mavesa x 500 gr Todo Uso",
-         "stock": 60, "precio_compra": 2.60, "precio_venta": 3.10, "stock_minimo": 20},
-        {"id": 13, "codigo": "P013", "nombre": "Champu Every Night Cereales Multiactivos 365Ml",
-         "stock": 40, "precio_compra": 6.20, "precio_venta": 7.20, "stock_minimo": 10},
-        {"id": 14, "codigo": "P014", "nombre": "Avena Pantera Hojuelas 400 Gr",
-         "stock": 50, "precio_compra": 1.50, "precio_venta": 1.80, "stock_minimo": 15},
-        {"id": 15, "codigo": "P015", "nombre": "Ketchup Pampero 397 gramos",
-         "stock": 50, "precio_compra": 2.10, "precio_venta": 2.60, "stock_minimo": 15},
-        {"id": 16, "codigo": "P016", "nombre": "Mayonesa Mavesa x 445 gr",
-         "stock": 50, "precio_compra": 3.90, "precio_venta": 4.60, "stock_minimo": 15},
-        {"id": 17, "codigo": "P017", "nombre": "Refresco Coca-Cola Sabor Original x 2 Lt",
-         "stock": 30, "precio_compra": 1.20, "precio_venta": 1.50, "stock_minimo": 10},
-        {"id": 18, "codigo": "P018", "nombre": "Snack Doritos Mega Queso x 150 gr",
-         "stock": 90, "precio_compra": 2.80, "precio_venta": 3.30, "stock_minimo": 20},
-        {"id": 19, "codigo": "P019", "nombre": "Chocolate Savoy Con Leche x 30 gr",
-         "stock": 30, "precio_compra": 1.20, "precio_venta": 1.50, "stock_minimo": 10},
-        {"id": 20, "codigo": "P020", "nombre": "Detergente Polvo Alive Blanqueador 1Kg",
-         "stock": 150, "precio_compra": 2.30, "precio_venta": 2.80, "stock_minimo": 30},
-    ]
-    st.session_state.ventas = []
-    st.session_state.detalle_ventas = []
-    st.session_state.contador_producto = 21
-    st.session_state.contador_venta = 1
-    guardar_datos()
+    if not cargar_datos():
+        # ✅ Solo se ejecuta si NO existe el archivo JSON
+        st.session_state.productos = [
+            {"id": 1, "codigo": "P001", "nombre": "Harina De Trigo Mary Leudante 900 Gr",
+             "stock": 85, "precio_compra": 0.90, "precio_venta": 1.08, "stock_minimo": 20},
+            {"id": 2, "codigo": "P002", "nombre": "Arroz Mary Premium 900 Gr. Tipo I",
+             "stock": 70, "precio_compra": 1.20, "precio_venta": 1.50, "stock_minimo": 20},
+            {"id": 3, "codigo": "P003", "nombre": "Arroz Mary Superior 900 Gr",
+             "stock": 150, "precio_compra": 1.00, "precio_venta": 1.20, "stock_minimo": 30},
+            {"id": 4, "codigo": "P004", "nombre": "Azúcar Montalban Refinada 1 Kg",
+             "stock": 100, "precio_compra": 1.80, "precio_venta": 2.20, "stock_minimo": 20},
+            {"id": 5, "codigo": "P005", "nombre": "Leche La Pastoreña Completa 1 Lt",
+             "stock": 50, "precio_compra": 2.40, "precio_venta": 2.90, "stock_minimo": 15},
+            {"id": 6, "codigo": "P006", "nombre": "Harina PAN Maíz Blanco Gluten Free",
+             "stock": 100, "precio_compra": 0.95, "precio_venta": 1.16, "stock_minimo": 25},
+            {"id": 7, "codigo": "P007", "nombre": "Pasta Primor Vermicelli 1 Kg",
+             "stock": 70, "precio_compra": 2.10, "precio_venta": 2.60, "stock_minimo": 20},
+            {"id": 8, "codigo": "P008", "nombre": "Crema Dental Alident Gel Azul Aliento Fresco 100 Gr",
+             "stock": 90, "precio_compra": 1.05, "precio_venta": 1.30, "stock_minimo": 20},
+            {"id": 9, "codigo": "P009", "nombre": "Crema Dental Colgate Triple Acción 150 ML",
+             "stock": 60, "precio_compra": 5.10, "precio_venta": 6.10, "stock_minimo": 15},
+            {"id": 10, "codigo": "P010", "nombre": "Papel Higiénico Rosal Plus 4 Rollos 600 Hojas cada uno",
+             "stock": 100, "precio_compra": 3.60, "precio_venta": 4.30, "stock_minimo": 25},
+            {"id": 11, "codigo": "P011", "nombre": "Toalla Sanitaria Always Día Seda Sec x 8 und",
+             "stock": 50, "precio_compra": 2.60, "precio_venta": 3.10, "stock_minimo": 15},
+            {"id": 12, "codigo": "P012", "nombre": "Margarina Mavesa x 500 gr Todo Uso",
+             "stock": 60, "precio_compra": 2.60, "precio_venta": 3.10, "stock_minimo": 20},
+            {"id": 13, "codigo": "P013", "nombre": "Champu Every Night Cereales Multiactivos 365Ml",
+             "stock": 40, "precio_compra": 6.20, "precio_venta": 7.20, "stock_minimo": 10},
+            {"id": 14, "codigo": "P014", "nombre": "Avena Pantera Hojuelas 400 Gr",
+             "stock": 50, "precio_compra": 1.50, "precio_venta": 1.80, "stock_minimo": 15},
+            {"id": 15, "codigo": "P015", "nombre": "Ketchup Pampero 397 gramos",
+             "stock": 50, "precio_compra": 2.10, "precio_venta": 2.60, "stock_minimo": 15},
+            {"id": 16, "codigo": "P016", "nombre": "Mayonesa Mavesa x 445 gr",
+             "stock": 50, "precio_compra": 3.90, "precio_venta": 4.60, "stock_minimo": 15},
+            {"id": 17, "codigo": "P017", "nombre": "Refresco Coca-Cola Sabor Original x 2 Lt",
+             "stock": 30, "precio_compra": 1.20, "precio_venta": 1.50, "stock_minimo": 10},
+            {"id": 18, "codigo": "P018", "nombre": "Snack Doritos Mega Queso x 150 gr",
+             "stock": 90, "precio_compra": 2.80, "precio_venta": 3.30, "stock_minimo": 20},
+            {"id": 19, "codigo": "P019", "nombre": "Chocolate Savoy Con Leche x 30 gr",
+             "stock": 30, "precio_compra": 1.20, "precio_venta": 1.50, "stock_minimo": 10},
+            {"id": 20, "codigo": "P020", "nombre": "Detergente Polvo Alive Blanqueador 1Kg",
+             "stock": 150, "precio_compra": 2.30, "precio_venta": 2.80, "stock_minimo": 30},
+        ]
+        st.session_state.ventas = []
+        st.session_state.detalle_ventas = []
+        st.session_state.contador_producto = 21
+        st.session_state.contador_venta = 1
+        guardar_datos()
 
 if "carrito" not in st.session_state:
     st.session_state.carrito = []
